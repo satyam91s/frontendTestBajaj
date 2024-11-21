@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ABCD123</title> <!-- Change title to your roll number -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+    }
+
+    textarea {
+      width: 100%;
+      height: 100px;
+      margin-bottom: 10px;
+    }
+
+    select {
+      width: 100%;
+      height: 50px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .output {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      background: #f9f9f9;
+    }
+
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>JSON Input to API Processor</h2>
+    <textarea id="jsonInput" placeholder='Enter JSON (e.g., { "data": ["A", "C", "z"] })'></textarea>
+    <button onclick="submitJson()">Submit</button>
+
+    <div id="dropdownContainer" style="display: none;">
+      <label for="filter">Filter Response:</label>
+      <select id="filter" multiple>
+        <option value="alphabets">Alphabets</option>
+        <option value="numbers">Numbers</option>
+        <option value="highest">Highest Lowercase Alphabet</option>
+      </select>
+      <button onclick="filterResponse()">Filter</button>
+    </div>
+
+    <div class="output" id="output"></div>
+    <div class="error" id="error"></div>
+  </div>
+
+  <script>
+    const API_ENDPOINT = 'https://your-backend-url.com/bfhl'; // Replace with your backend URL
+
+    let apiResponse = null;
+
+    function submitJson() {
+      const jsonInput = document.getElementById('jsonInput').value;
+      const errorElement = document.getElementById('error');
+      const outputElement = document.getElementById('output');
+      const dropdownContainer = document.getElementById('dropdownContainer');
+
+      errorElement.innerText = '';
+      outputElement.innerText = '';
+      dropdownContainer.style.display = 'none';
+
+      try {
+        const parsedInput = JSON.parse(jsonInput); // Validate JSON
+        if (!parsedInput.data || !Array.isArray(parsedInput.data)) {
+          throw new Error('JSON must have a "data" field with an array.');
+        }
+
+        // Send POST request to backend
+        fetch(API_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(parsedInput)
+        })
+          .then(response => response.json())
+          .then(data => {
+            apiResponse = data;
+            dropdownContainer.style.display = 'block';
+            outputElement.innerText = `Full Response: ${JSON.stringify(data, null, 2)}`;
+          })
+          .catch(err => {
+            errorElement.innerText = `Error: ${err.message}`;
+          });
+      } catch (err) {
+        errorElement.innerText = `Error: ${err.message}`;
+      }
+    }
+
+    function filterResponse() {
+      const filter = Array.from(document.getElementById('filter').selectedOptions).map(opt => opt.value);
+      const outputElement = document.getElementById('output');
+
+      if (!apiResponse) {
+        outputElement.innerText = 'No response to filter. Please submit valid JSON first.';
+        return;
+      }
+
+      const filteredResponse = {};
+      if (filter.includes('alphabets')) filteredResponse.alphabets = apiResponse.alphabets;
+      if (filter.includes('numbers')) filteredResponse.numbers = apiResponse.numbers;
+      if (filter.includes('highest')) filteredResponse.highest = apiResponse.highestLowercaseAlphabet;
+
+      outputElement.innerText = `Filtered Response: ${JSON.stringify(filteredResponse, null, 2)}`;
+    }
+  </script>
+</body>
+</html>
